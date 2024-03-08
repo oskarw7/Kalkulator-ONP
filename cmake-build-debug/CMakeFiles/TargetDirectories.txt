@@ -1,0 +1,3 @@
+/Users/oskarwisniewski/Desktop/Studia/PG kod/Algorytmy i struktury danych/Kalkulator ONP/cmake-build-debug/CMakeFiles/Kalkulator_ONP.dir
+/Users/oskarwisniewski/Desktop/Studia/PG kod/Algorytmy i struktury danych/Kalkulator ONP/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/oskarwisniewski/Desktop/Studia/PG kod/Algorytmy i struktury danych/Kalkulator ONP/cmake-build-debug/CMakeFiles/rebuild_cache.dir
