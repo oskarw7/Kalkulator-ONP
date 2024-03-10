@@ -100,7 +100,7 @@ int isOperator(char c) {
 int isFunction(char* c){
     char functions[][MAX_SIZE] = {"MIN", "MAX", "IF", "N"};
     for(char* elem : functions){
-        if(strcmp(c, elem)==0)
+        if(strncmp(c, elem, 3)==0)
             return 1;
     }
     return 0;
@@ -126,26 +126,36 @@ char* convert_infix(Node** top, char* onp){
             if(*top == nullptr || token[0] == 'N' || precendence((*top)->token[0]) < precendence(token[0]))
                 push(top, token);
             else if(token[0] != 'N'){
-                while(*top != nullptr && ((*top)->token[0]) >= precendence(token[0])) {
+                while(*top!=nullptr && (*top)->token[0]!='(' && precendence((*top)->token[0])>=precendence(token[0])){
                     onp = add_strings(onp, (*top)->token);
                     pop(top);
                 }
                 push(top, token);
             }
         }
-        else if(strcmp(token, "IF")==0 || token[0]=='('){
+        else if(isFunction(token) || token[0]=='('){
+            if(strcmp(token, "MAX")==0 | strcmp(token, "MIN")==0)
+                token[3]='1';
             push(top, token);
         }
         else if(token[0]==')'){
             onp = find_parentheses(top, onp);
             pop(top);
-            if(isFunction((*top)->token)) {
+            if((*top)!=NULL && isFunction((*top)->token)) {
                 onp = add_strings(onp, (*top)->token);
                 pop(top);
             }
         }
         else if(token[0]==','){
             onp = find_parentheses(top, onp);
+            char* temp = (*top)->previous->token;
+            if(temp!=NULL && (*top)->token[0]=='('){
+                if(strncmp(temp, "MAX", 3) == 0 || strncmp(temp, "MIN", 3) == 0){
+                    int num = temp[3] - '0';
+                    num++;
+                    temp[3] = num + '0';
+                }
+            }
         }
         else if(token[0]=='.'){
             while(*top!= nullptr){
@@ -160,6 +170,17 @@ char* convert_infix(Node** top, char* onp){
     return onp;
 }
 
+void count_postfix(Node** top, char* onp){
+    char* token;
+    token = strtok(onp, " ");
+    while(token != NULL){
+        
+
+        token = strtok(NULL, " ");
+    }
+}
+
+
 int main() {
     Node* top = nullptr;
     char* onp = (char *)malloc(1);
@@ -170,7 +191,10 @@ int main() {
     for(int i=0; i<n; i++){
         onp = convert_infix(&top, onp);
         print_string(onp);
-        // count postfix
+        printf("\n");
+
+        count_postfix(&top, onp);
+
         memset(onp, '\0', strlen(onp));
     }
 
