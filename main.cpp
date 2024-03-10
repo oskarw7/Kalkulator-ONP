@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define MAX_SIZE 10 // największa liczba znaków dla int'a
+
 typedef struct Node {
     char token[MAX_SIZE];
     Node* previous;
@@ -24,7 +25,7 @@ void pop(Node** top){
     free(temp);
 }
 
-void print_stack(Node* top){
+void print_stack(Node* top){ // do usunięcia
     while(top!= nullptr) {
         printf("%s ", top->token);
         top = top->previous;
@@ -71,19 +72,14 @@ int precendence(char c){
     switch(c){
         case '+':
             return 1;
-            break;
         case '-':
             return 1;
-            break;
         case '*':
             return 2;
-            break;
         case '/':
             return 2;
-            break;
         case 'N':
             return 3;
-            break;
     }
     return 0;
 }
@@ -112,6 +108,29 @@ char* find_parentheses(Node**  top, char* onp){ // sprawdzić działanie (zmiana
         pop(top);
     }
     return onp;
+}
+
+int convert_number(char* token){
+    int num=0, j=1;
+    for(int i=strlen(token)-1; i>=0; i--){
+        int digit = token[i] - '0';
+        num += digit*j;
+        j*=10;
+    }
+}
+
+int count(int a, int b, char o){ // jesli a=0 i o=/, nie wywoluj funkcji
+    switch(o){
+        case '+':
+            return b+a;
+        case '-':
+            return b-a;
+        case '*':
+            return b*a;
+        case '/':
+            return b/a;
+    }
+    return 0;
 }
 
 char* convert_infix(Node** top, char* onp){
@@ -174,7 +193,20 @@ void count_postfix(Node** top, char* onp){
     char* token;
     token = strtok(onp, " ");
     while(token != NULL){
-        
+        if(token[0]>='0' && token[0]<='9'){
+            push(top, token);
+        }
+        else if(isOperator(token[0])){
+            int a = convert_number((*top)->token);
+            pop(top);
+            if(token[0]=='N'){
+
+            }
+            else {
+                int b = convert_number((*top)->token);
+                pop(top);
+            }
+        }
 
         token = strtok(NULL, " ");
     }
@@ -193,7 +225,7 @@ int main() {
         print_string(onp);
         printf("\n");
 
-        count_postfix(&top, onp);
+        //count_postfix(&top, onp);
 
         memset(onp, '\0', strlen(onp));
     }
