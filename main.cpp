@@ -4,35 +4,69 @@
 
 #define MAX_SIZE 10 // największa liczba znaków dla int'a
 
-typedef struct Node {
+typedef struct CharNode {
     char token[MAX_SIZE];
-    Node* previous;
-} Node;
+    CharNode* previous;
+} CharNode;
 
+typedef struct IntNode {
+    int token;
+    IntNode* previous;
+} IntNode;
 
-void push(Node** top, char* token){
-    Node* new_node = (Node*)malloc(sizeof(Node));
+void push(IntNode** top, int token){
+    IntNode* new_node = (IntNode*)malloc(sizeof(IntNode));
+    new_node->token = token;
+    new_node->previous = *top;
+    *top = new_node;
+}
+
+int pop(IntNode** top){
+    IntNode* temp;
+    temp = *top;
+    int token = temp->token;
+    *top = (*top)->previous;
+    free(temp);
+    return token;
+}
+
+void print_stack(IntNode* top){
+    while(top != nullptr) {
+        printf("%d ", top->token);
+        top = top->previous;
+    }
+    printf("\n");
+}
+
+void free_stack(IntNode** top){
+    while(*top!= nullptr){
+        pop(top);
+    }
+}
+
+void push(CharNode** top, char* token){
+    CharNode* new_node = (CharNode*)malloc(sizeof(CharNode));
     strcpy(new_node->token, token);
 
     new_node->previous = *top;
     *top = new_node;
 }
 
-void pop(Node** top){
-    Node* temp;
+void pop(CharNode** top){
+    CharNode* temp;
     temp = *top;
     *top = (*top)->previous;
     free(temp);
 }
 
-void print_stack(Node* top){ // do usunięcia
+void print_stack(CharNode* top){ // do usunięcia
     while(top!= nullptr) {
         printf("%s ", top->token);
         top = top->previous;
     }
 }
 
-void free_stack(Node** top){
+void free_stack(CharNode** top){
     while(*top!= nullptr){
         pop(top);
     }
@@ -102,7 +136,7 @@ int isFunction(char* c){
     return 0;
 }
 
-char* find_parentheses(Node**  top, char* onp){ // sprawdzić działanie (zmiana dla przecinka)
+char* find_parentheses(CharNode**  top, char* onp){ // sprawdzić działanie (zmiana dla przecinka)
     while((*top)->token[0]!='('){
         onp = add_strings(onp, (*top)->token);
         pop(top);
@@ -117,6 +151,7 @@ int convert_number(char* token){
         num += digit*j;
         j*=10;
     }
+    return num;
 }
 
 int count(int a, int b, char o){ // jesli a=0 i o=/, nie wywoluj funkcji
@@ -133,7 +168,7 @@ int count(int a, int b, char o){ // jesli a=0 i o=/, nie wywoluj funkcji
     return 0;
 }
 
-char* convert_infix(Node** top, char* onp){
+char* convert_infix(CharNode** top, char* onp){
     char token[MAX_SIZE] = "";
     while(token[0]!='.'){
         scanf("%s", token);
@@ -189,32 +224,75 @@ char* convert_infix(Node** top, char* onp){
     return onp;
 }
 
-void count_postfix(Node** top, char* onp){
+void count_postfix(char* onp){
+    IntNode* top = nullptr;
     char* token;
     token = strtok(onp, " ");
     while(token != NULL){
         if(token[0]>='0' && token[0]<='9'){
-            push(top, token);
+            push(&top, convert_number(token));
         }
         else if(isOperator(token[0])){
-            int a = convert_number((*top)->token);
-            pop(top);
+            printf("%c ", token[0]);
+            print_stack(top);
+            int a = pop(&top);
             if(token[0]=='N'){
-
+                push(&top, -1*a);
             }
             else {
-                int b = convert_number((*top)->token);
-                pop(top);
+                if(token[0]=='/' && a==0){
+                    printf("ERROR\n");
+                    return;
+                }
+                int b = pop(&top);
+                int result = count(a, b, token[0]);
+                push(&top, result);
+            }
+        }
+        else if(token[0]=='I'){
+            printf("%s ", token);
+            print_stack(top);
+            int c = pop(&top);
+            int b = pop(&top);
+            int a = pop(&top);
+            int result = (a>0) ? b : c;
+            push(&top, result);
+        }
+        else if(token[0]=='M'){
+            printf("%s ", token);
+            print_stack(top);
+            int num = token[3] - '0';
+            if(strncmp(token, "MAX",3)==0){
+                int max = pop(&top), temp;
+                for(int i=1; i<num; i++){
+                    temp = pop(&top);
+                    if(max<temp)
+                        max = temp;
+                }
+                push(&top, max);
+            }
+            if(strncmp(token, "MIN",3)==0){
+                int min = pop(&top), temp;
+                for(int i=1; i<num; i++){
+                    temp = pop(&top);
+                    if(min>temp)
+                        min = temp;
+                }
+                push(&top, min);
             }
         }
 
         token = strtok(NULL, " ");
     }
+    print_stack(top);
+    free_stack(&top);
 }
 
 
 int main() {
-    Node* top = nullptr;
+    CharNode* top = nullptr;
+    IntNode* top_onp = nullptr;
+
     char* onp = (char *)malloc(1);
     strcpy(onp, "");
 
@@ -225,12 +303,13 @@ int main() {
         print_string(onp);
         printf("\n");
 
-        //count_postfix(&top, onp);
+        count_postfix(onp);
 
         memset(onp, '\0', strlen(onp));
     }
 
     free(onp);
+    free_stack(&top_onp);
     free_stack(&top);
 
     return 0;
