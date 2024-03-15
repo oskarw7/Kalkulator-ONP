@@ -4,6 +4,12 @@
 
 #define MAX_SIZE 10 // największa liczba znaków dla int'a
 
+typedef struct ONPString {
+    char* string;
+    unsigned int lenght;
+    unsigned int capacity;
+} ONPString;
+
 typedef struct CharNode {
     char token[MAX_SIZE];
     CharNode* previous;
@@ -46,8 +52,16 @@ void free_stack(IntNode** top){
 
 void push(CharNode** top, char* token){
     CharNode* new_node = (CharNode*)malloc(sizeof(CharNode));
-    strcpy(new_node->token, token);
-
+    //strcpy(new_node->token, token);
+    int i=0;
+    while(token[i]!='\0'){
+        new_node->token[i] = token[i];
+        i++;
+    }
+    while(i<MAX_SIZE){
+        new_node->token[i]='\0';
+        i++;
+    }
     new_node->previous = *top;
     *top = new_node;
 }
@@ -77,6 +91,43 @@ void allocation_error(char* s1){
         printf("Allocating memory failed");
         exit(1);
     }
+}
+
+int length(char* s){
+    int i=0;
+    while(s[i]!='\0')
+        i++;
+    return i;
+}
+
+void append_string(ONPString* onp, char* str){
+    int str_lenght = length(str);
+    if(onp->lenght!=0){
+        onp->lenght += str_lenght + 1;
+        if(onp->lenght >= onp->capacity){
+            onp->capacity += MAX_SIZE;
+            onp->string = (char*)realloc(onp->string, onp->capacity);
+            allocation_error(onp->string);
+        }
+        //onp->string = strcat(onp->string, " ");
+        //onp->string = strcat(onp->string, str);
+        onp->string[onp->lenght-str_lenght-1] = ' ';
+        for(int i=0; i<=str_lenght; i++){
+            onp->string[onp->lenght - str_lenght + i] = str[i];
+        }
+    }
+    else {
+        onp->lenght += str_lenght;
+        if (onp->lenght >= onp->capacity) {
+            onp->capacity += MAX_SIZE;
+            onp->string = (char *) realloc(onp->string, onp->capacity);
+            allocation_error(onp->string);
+        }
+        for (int i = 0; i < str_lenght; i++) {
+            onp->string[onp->lenght - str_lenght + i] = str[i];
+        }
+    }
+    onp->string[onp->lenght] = '\0';
 }
 
 char* add_strings(char* s1, char* s2){ // usunąć ostatnią spację
@@ -136,17 +187,18 @@ int isFunction(char* c){
     return 0;
 }
 
-char* find_parentheses(CharNode**  top, char* onp){ // sprawdzić działanie (zmiana dla przecinka)
+void find_parentheses(CharNode**  top, ONPString* onp){ // sprawdzić działanie (zmiana dla przecinka)
     while((*top)->token[0]!='('){
-        onp = add_strings(onp, (*top)->token);
+        //onp = add_strings(onp, (*top)->token);
+        append_string(onp, (*top)->token);
         pop(top);
     }
-    return onp;
+
 }
 
 int convert_number(char* token){
     int num=0, j=1;
-    for(int i=strlen(token)-1; i>=0; i--){
+    for(int i= length(token)-1; i>=0; i--){
         int digit = token[i] - '0';
         num += digit*j;
         j*=10;
@@ -168,52 +220,74 @@ int count(int a, int b, char o){ // jesli a=0 i o=/, nie wywoluj funkcji
     return 0;
 }
 
-char* convert_infix(CharNode** top, char* onp){
+void convert_infix(CharNode** top, ONPString* onp){
     char token[MAX_SIZE] = "";
     while(token[0]!='.'){
         scanf("%s", token);
 
         if(token[0]>='0' && token[0]<='9'){
-            onp = add_strings(onp, token);
+            //onp = add_strings(onp, token);
+            append_string(onp, token);
         }
         else if(isOperator(token[0])){
             if(*top == nullptr || token[0] == 'N' || precendence((*top)->token[0]) < precendence(token[0]))
                 push(top, token);
             else if(token[0] != 'N'){
                 while(*top!=nullptr && (*top)->token[0]!='(' && precendence((*top)->token[0])>=precendence(token[0])){
-                    onp = add_strings(onp, (*top)->token);
+                    //onp = add_strings(onp, (*top)->token);
+                    append_string(onp, (*top)->token);
                     pop(top);
                 }
                 push(top, token);
             }
         }
         else if(isFunction(token) || token[0]=='('){
-            if(strcmp(token, "MAX")==0 | strcmp(token, "MIN")==0)
+            if(token[0]=='M')
                 token[3]='1';
             push(top, token);
         }
         else if(token[0]==')'){
-            onp = find_parentheses(top, onp);
+            //onp = find_parentheses(top, onp);
+            find_parentheses(top, onp);
             pop(top);
             if((*top)!=NULL && isFunction((*top)->token)) {
-                onp = add_strings(onp, (*top)->token);
+                //onp = add_strings(onp, (*top)->token);
+                append_string(onp, (*top)->token);
                 pop(top);
             }
         }
         else if(token[0]==','){
-            onp = find_parentheses(top, onp);
+            //onp = find_parentheses(top, onp);
+            find_parentheses(top, onp);
             char* temp = (*top)->previous->token;
             if(temp!=NULL && (*top)->token[0]=='('){
-                if(strncmp(temp, "MAX", 3) == 0 || strncmp(temp, "MIN", 3) == 0){
-                    int num = temp[3] - '0';
+                if(temp[0]=='M'){
+                    //int num = temp[3] - '0';
+                    //num++;
+                    //temp[3] = num + '0';
+                    int j=1, num=0, digit, digits=0;
+                    for(int i=MAX_SIZE-1; i>=3; i--){
+                        if(temp[i]!='\0') {
+                            digit = temp[i] - '0';
+                            num += digit * j;
+                            j*=10;
+                            if(digits==0 && temp[3]=='9' && temp[4]=='\0')
+                                digits++;
+                            digits++;
+                        }
+                    }
                     num++;
-                    temp[3] = num + '0';
+                    for(int i=3+digits-1; i>=3; i--){
+                        temp[i] = num%10 + '0'; //gdy liczba wynosi 9, to digits=1, a nie 2, wiec wychodzi 0 w modulo
+                        num/=10;
+                    }
                 }
             }
         }
         else if(token[0]=='.'){
             while(*top!= nullptr){
-                onp = add_strings(onp, (*top)->token);
+                //onp = add_strings(onp, (*top)->token);
+                append_string(onp, (*top)->token);
                 pop(top);
             }
         }
@@ -221,13 +295,12 @@ char* convert_infix(CharNode** top, char* onp){
         if(token[0]!='.')
             memset(token, '\0', sizeof(token));
     }
-    return onp;
 }
 
-void count_postfix(char* onp){
+void count_postfix(char** onp){
     IntNode* top = nullptr;
     char* token;
-    token = strtok(onp, " ");
+    token = strtok(*onp, " ");
     while(token != NULL){
         if(token[0]>='0' && token[0]<='9'){
             push(&top, convert_number(token));
@@ -261,8 +334,19 @@ void count_postfix(char* onp){
         else if(token[0]=='M'){
             printf("%s ", token);
             print_stack(top);
-            int num = token[3] - '0';
-            if(strncmp(token, "MAX",3)==0){
+            int j=1, k=3, num=0, digit, digits=0;
+            while(token[k]!='\0'){
+                digits++;
+                k++;
+            }
+            for(int i=3+digits-1; i>=3; i--){
+                if(token[i]!='\0') {
+                    digit = token[i] - '0';
+                    num += digit * j;
+                    j *= 10;
+                }
+            }
+            if(token[1]=='A'){
                 int max = pop(&top), temp;
                 for(int i=1; i<num; i++){
                     temp = pop(&top);
@@ -271,7 +355,7 @@ void count_postfix(char* onp){
                 }
                 push(&top, max);
             }
-            if(strncmp(token, "MIN",3)==0){
+            if(token[1]=='I'){
                 int min = pop(&top), temp;
                 for(int i=1; i<num; i++){
                     temp = pop(&top);
@@ -281,7 +365,6 @@ void count_postfix(char* onp){
                 push(&top, min);
             }
         }
-
         token = strtok(NULL, " ");
     }
     print_stack(top);
@@ -291,25 +374,31 @@ void count_postfix(char* onp){
 
 int main() {
     CharNode* top = nullptr;
-    IntNode* top_onp = nullptr;
 
-    char* onp = (char *)malloc(1);
-    strcpy(onp, "");
+    ONPString onp;
+    onp.string = (char*)malloc(1);
+    onp.string[0] = '\0';
+    onp.lenght = 0;
+    onp.capacity = 1;
+
+    //char* onp = (char *)malloc(1);
+    //strcpy(onp, "");
 
     int n;
     scanf("%d", &n);
     for(int i=0; i<n; i++){
-        onp = convert_infix(&top, onp);
-        print_string(onp);
+        convert_infix(&top, &onp);
+        print_string(onp.string);
         printf("\n");
 
-        count_postfix(onp);
+        count_postfix(&onp.string);
 
-        memset(onp, '\0', strlen(onp));
+        memset(onp.string, '\0', strlen(onp.string));
+        onp.lenght = 0;
+        onp.capacity = 1;
     }
 
-    free(onp);
-    free_stack(&top_onp);
+    free(onp.string);
     free_stack(&top);
 
     return 0;
