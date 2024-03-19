@@ -3,11 +3,12 @@
 
 #include <stdlib.h>
 
-#define CHAR_TOKEN_SIZE 6 // maksymalna wielkość tokenu + 1 dla \0
+#define CHAR_TOKEN_SIZE 4 // maksymalna wielkość tokenu bez liczby argumetów + 1 dla \0
+#define TOKEN_SIZE 14 // maksymalna wielkość tokenu + 1 dla \0
 
 // struktura repreztująca węzeł stosu c-style string'ów
 typedef struct CharNode {
-    char token[CHAR_TOKEN_SIZE];
+    char token[TOKEN_SIZE];
     CharNode* previous;
 } CharNode;
 

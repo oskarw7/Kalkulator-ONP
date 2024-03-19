@@ -7,7 +7,7 @@ void push(CharNode** top, const char* token){
         new_node->token[i] = token[i];
         i++;
     }
-    while(i<CHAR_TOKEN_SIZE){
+    while(i<TOKEN_SIZE){
         new_node->token[i]='\0';
         i++;
     }

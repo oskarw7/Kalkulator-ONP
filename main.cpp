@@ -36,12 +36,20 @@ int isOperator(const char c) {
 
 // sprawdza, czy ciąg znaków jest funkcją
 int isFunction(const char* c){
-    char functions[][CHAR_TOKEN_SIZE-2] = {"MIN", "MAX", "IF", "N"};
+    char functions[][CHAR_TOKEN_SIZE] = {"MIN", "MAX", "IF", "N"};
     for(char* elem : functions){
-        if(strncmp(c, elem, 3)==0)
+        if(strncmp(c, elem, CHAR_TOKEN_SIZE-1)==0)
             return 1;
     }
     return 0;
+}
+
+int checkIfNine(const char* token){
+    for(int i=length(token)-1; i>=CHAR_TOKEN_SIZE-1; i--){
+        if(token[i]!='9')
+            return 0;
+    }
+    return 1;
 }
 
 // dodaje tokeny ze stosu do ONP do czasu napotkania pasującego nawiasu
@@ -55,7 +63,7 @@ void find_parentheses(CharNode**  top, ONPString* onp){
 // konwertuje c-style stringa na liczbę podczas obliczania wyrażenia ONP
 int convert_number(const char* token){
     int num=0, j=1;
-    for(int i= length(token)-1; i>=0; i--){
+    for(int i=length(token)-1; i>=0; i--){
         int digit = token[i] - '0';
         num += digit*j;
         j*=10;
@@ -66,18 +74,18 @@ int convert_number(const char* token){
 // zwiększa liczbę o 1 podczas konwersji wyrażenia ONP
 void increment_number(char* token){
     int j=1, num=0, digit, digits=0;
-    for(int i=CHAR_TOKEN_SIZE-1; i>=3; i--){
+    for(int i=length(token)-1; i>=CHAR_TOKEN_SIZE-1; i--){
         if(token[i]!='\0') {
             digit = token[i] - '0';
             num += digit * j;
             j*=10;
-            if(digits==0 && token[3]=='9' && token[4]=='\0')
-                digits++;
             digits++;
         }
     }
+    if(checkIfNine(token))
+        digits++;
     num++;
-    for(int i=3+digits-1; i>=3; i--){
+    for(int i=CHAR_TOKEN_SIZE-1+digits-1; i>=CHAR_TOKEN_SIZE-1; i--){
         token[i] = num%10 + '0';
         num/=10;
     }
@@ -85,12 +93,8 @@ void increment_number(char* token){
 
 // wyodrębnia liczbę z tokenu MIN/MAX
 int extract_number(const char* token){
-    int j=1, k=3, num=0, digit, digits=0;
-    while(token[k]!='\0'){
-        digits++;
-        k++;
-    }
-    for(int i=3+digits-1; i>=3; i--){
+    int j=1, num=0, digit;
+    for(int i= length(token)-1; i>=CHAR_TOKEN_SIZE-1; i--){
         if(token[i]!='\0') {
             digit = token[i] - '0';
             num += digit * j;
@@ -138,9 +142,9 @@ int count(int a, int b, char o){
 // czyta wyrażenie infiksowe i zamienia je na wyrażenie ONP
 void convert_infix(ONPString* onp){
     CharNode* top = nullptr;
-    char token[INT_TOKEN_SIZE] = "";
+    char token[TOKEN_SIZE] = "";
     while(token[0]!='.'){
-        scanf("%10s", token);
+        scanf("%13s", token);
 
         if(token[0]>='0' && token[0]<='9')
             append_string(onp, token);
@@ -179,6 +183,8 @@ void convert_infix(ONPString* onp){
                 pop(&top);
             }
         }
+        if(token[0]!='.')
+            memset(token, '\0', TOKEN_SIZE);
     }
     free_stack(&top);
 }
