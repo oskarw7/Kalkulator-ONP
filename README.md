@@ -1,0 +1,1 @@
+This project converts infix notation to postfix and calculates it. In other words, it is Reversed Polish Notation calculator, which computes following functions: add, substract, multiply, divide, if, max/min with X arguments.
